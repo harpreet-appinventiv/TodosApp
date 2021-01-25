@@ -10,7 +10,6 @@ import {
   Image,
   TouchableOpacity,
   FlatList,
-  Dimensions,
 } from 'react-native';
 import { connect } from 'react-redux';
 import { addTask, deleteTask, editTask, completeTask } from './homeAction';
@@ -21,17 +20,24 @@ class Home extends React.Component{
     super();
     this.state = {
       listData : [],
-      task : ""
+      task : "",
+      edit: undefined
     }
   }
 
   onAddingTast = (task) => {
-    this.props.addTask(task)
+    this.props.addTask(task.trim())
     this.setState({task:''})
   }
 
+  updateTask = ({id, task}) => {
+    this.setState({task: task.trim(), editId:id});
+    this.ref.focus();
+  }
+
   render(){
-    const {listData, completeTask, cancleTask, deleteTask} = this.props;
+    const {listData, completeTask, deleteTask} = this.props;
+    const {editId, task} = this.state;
     return (
       <React.Fragment>
         <StatusBar barStyle="dark-content" />
@@ -46,18 +52,19 @@ class Home extends React.Component{
                 <TextInput 
                   multiline={true} 
                   placeholder={"Enter Task here..."} 
-                  value={this.state.task}
+                  value={task}
                   onChangeText={(task) => this.setState({task})}
                   style={styles.taskInput} 
+                  ref={ref => this.ref = ref}
                 />
                 <TouchableOpacity
-                  onPress={() => {this.state.task && this.onAddingTast(this.state.task)}}
+                  onPress={() => {task.trim().length > 0 && ( editId ? (this.props.editTask({editId, task}) && this.setState({editId: undefined, task:""})  ) : this.onAddingTast(this.state.task)) }}
                   style={styles.addButton}
                 >
                   <Text style={styles.addText}>ADD</Text>
                 </TouchableOpacity>
               </View>
-              { listData && <TodoList state={this.state} listData={listData} completeTask={completeTask} cancleTask={cancleTask} deleteTask={deleteTask} />}
+              { listData && <TodoList state={this.state} listData={listData} completeTask={completeTask} deleteTask={deleteTask} updateTask={this.updateTask}/>}
             </View>
           </ScrollView>
         </SafeAreaView>
@@ -66,21 +73,21 @@ class Home extends React.Component{
   }
 };
 
-const TodoList = ({state, listData, completeTask, cancleTask, deleteTask}) =>{
+const TodoList = ({state, listData, completeTask,  deleteTask, updateTask}) =>{
   return(
     <FlatList 
       data={listData}
       extraData={state}
       keyboardShouldPersistTaps={"always"}
       renderItem={({item})=>
-        <RenderRodoList item={item} completeTask={completeTask} deleteTask={deleteTask} />
+        <RenderRodoList item={item} completeTask={completeTask} deleteTask={deleteTask} updateTask={updateTask} />
       }
       style={{marginTop:15}}
     />
   )
 }
 
-const RenderRodoList = ({item, completeTask, deleteTask}) =>{
+const RenderRodoList = ({item, completeTask, deleteTask, updateTask}) =>{
   // alert(isCompleted)
   return(
     <View style={styles.rowView} >
@@ -92,7 +99,7 @@ const RenderRodoList = ({item, completeTask, deleteTask}) =>{
           <Image source={require("../../assets/tick.png")} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.todoRowButton,{backgroundColor:"blue"}]}>
+        <TouchableOpacity style={[styles.todoRowButton,{backgroundColor:"blue"}]} onPress={() => updateTask(item) } >
            <Image source={require("../../assets/draw.png")} style={styles.icons} />
         </TouchableOpacity>
 

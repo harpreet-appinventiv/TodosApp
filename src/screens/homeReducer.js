@@ -1,3 +1,5 @@
+import { act } from "react-test-renderer";
+
 intialState = {
     listData : []
 }
@@ -21,15 +23,18 @@ export default function HomeReducer(state=intialState, action ){
             return {
                 ...state,
                 listData: newList
-            }
-            
+            }    
         case 'EDIT_TASK':
-            // const {newListData} = state
-            // newListData.splice(action.payload, 1)
-            // return {
-            //     ...state,
-            //     listData : listData
-            // }
+            const updatedTaskList = state.listData.map(item => {
+                if(item.id === action.payload.editId){
+                    item.task = action.payload.task
+                }
+                return item
+            })
+            return {
+                ...state,
+                listData : updatedTaskList
+            }
         case 'DELETE_TASK':
             const newListAfterDelete = state.listData.filter(item => item.id !== action.payload)
             return {
